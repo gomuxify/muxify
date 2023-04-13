@@ -6,12 +6,14 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("no matching route was found")
+	ErrNotFound       = errors.New("no matching route was found")
+	ErrMethodMismatch = errors.New("method is not allowed")
 )
 
 type Router struct {
-	NotFoundHandler http.Handler
-	routes          []*Route
+	NotFoundHandler         http.Handler
+	MethodNotAllowedHandler http.Handler
+	routes                  []*Route
 }
 
 func NewRouter() *Router {
@@ -23,6 +25,10 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var handler http.Handler
 	if r.Match(req, &match) {
 		handler = match.Handler
+	}
+
+	if handler == nil && match.MatchErr == ErrMethodMismatch {
+		handler = methodNotAllowedHandler()
 	}
 
 	if handler == nil {
@@ -45,31 +51,27 @@ func (r *Router) NewRoute() *Route {
 }
 
 func (r *Router) Post(path string, f func(http.ResponseWriter, *http.Request)) *Route {
-	return r.NewRoute().Method("POST").Path(path).HandlerFunc(f)
+	return r.upsertPath(path, "POST", f)
 }
 
 func (r *Router) Get(path string, f func(http.ResponseWriter, *http.Request)) *Route {
-	return r.NewRoute().Method("GET").Path(path).HandlerFunc(f)
+	return r.upsertPath(path, "GET", f)
 }
 
 func (r *Router) Put(path string, f func(http.ResponseWriter, *http.Request)) *Route {
-	return r.NewRoute().Method("PUT").Path(path).HandlerFunc(f)
+	return r.upsertPath(path, "PUT", f)
 }
 
 func (r *Router) Patch(path string, f func(http.ResponseWriter, *http.Request)) *Route {
-	return r.NewRoute().Method("PATCH").Path(path).HandlerFunc(f)
+	return r.upsertPath(path, "PATCH", f)
 }
 
 func (r *Router) Delete(path string, f func(http.ResponseWriter, *http.Request)) *Route {
-	return r.NewRoute().Method("DELETE").Path(path).HandlerFunc(f)
+	return r.upsertPath(path, "DELETE", f)
 }
 
 func (r *Router) Options(path string, f func(http.ResponseWriter, *http.Request)) *Route {
-	return r.NewRoute().Method("OPTIONS").Path(path).HandlerFunc(f)
-}
-
-func (r *Router) Request(path string, f func(http.ResponseWriter, *http.Request)) *Route {
-	return r.NewRoute().Path(path).HandlerFunc(f)
+	return r.upsertPath(path, "OPTIONS", f)
 }
 
 func (r *Router) Match(req *http.Request, match *RouteMatch) bool {
@@ -77,6 +79,15 @@ func (r *Router) Match(req *http.Request, match *RouteMatch) bool {
 		if route.Match(req, match) {
 			return true
 		}
+	}
+
+	if match.MatchErr == ErrMethodMismatch {
+		if r.MethodNotAllowedHandler != nil {
+			match.Handler = r.MethodNotAllowedHandler
+			return true
+		}
+
+		return false
 	}
 
 	if r.NotFoundHandler != nil {
@@ -87,4 +98,30 @@ func (r *Router) Match(req *http.Request, match *RouteMatch) bool {
 
 	match.MatchErr = ErrNotFound
 	return false
+}
+
+func (r *Router) upsertPath(path, method string, f func(http.ResponseWriter, *http.Request)) *Route {
+	if route := r.findRouteWithPath(path); route != nil {
+		return route.MethodHandlerFunc(method, f)
+	}
+
+	return r.NewRoute().Path(path).MethodHandlerFunc(method, f)
+}
+
+func (r *Router) findRouteWithPath(path string) *Route {
+	for _, route := range r.routes {
+		if route.path == path {
+			return route
+		}
+	}
+
+	return nil
+}
+
+func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusMethodNotAllowed)
+}
+
+func methodNotAllowedHandler() http.Handler {
+	return http.HandlerFunc(methodNotAllowed)
 }
