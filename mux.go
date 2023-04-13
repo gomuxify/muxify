@@ -1,6 +1,7 @@
 package muxify
 
 import (
+	"context"
 	"errors"
 	"net/http"
 )
@@ -25,6 +26,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var handler http.Handler
 	if r.Match(req, &match) {
 		handler = match.Handler
+		req = ctxAddParams(req, match.Params)
 	}
 
 	if handler == nil && match.MatchErr == ErrMethodMismatch {
@@ -41,6 +43,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 type RouteMatch struct {
 	Route    *Route
 	Handler  http.Handler
+	Params   map[string]string
 	MatchErr error
 }
 
@@ -100,6 +103,13 @@ func (r *Router) Match(req *http.Request, match *RouteMatch) bool {
 	return false
 }
 
+func Params(r *http.Request) map[string]string {
+	if rv := r.Context().Value(paramsKey); rv != nil {
+		return rv.(map[string]string)
+	}
+	return nil
+}
+
 func (r *Router) upsertPath(path, method string, f func(http.ResponseWriter, *http.Request)) *Route {
 	if route := r.findRouteWithPath(path); route != nil {
 		return route.MethodHandlerFunc(method, f)
@@ -124,4 +134,15 @@ func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
 
 func methodNotAllowedHandler() http.Handler {
 	return http.HandlerFunc(methodNotAllowed)
+}
+
+type contextKey int
+
+const (
+	paramsKey contextKey = iota
+)
+
+func ctxAddParams(r *http.Request, params map[string]string) *http.Request {
+	ctx := context.WithValue(r.Context(), paramsKey, params)
+	return r.WithContext(ctx)
 }
