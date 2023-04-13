@@ -13,7 +13,7 @@ func main() {
 		fmt.Fprintln(w, "Posting /")
 	})
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Getting /")
 	})
 
