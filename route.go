@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+const (
+	pathParamPattern string = "([^/]+)"
+)
+
 type Route struct {
 	tmplPath string
 	mappings []*routeMapping
@@ -92,7 +96,7 @@ func (r *Route) registerMatcher(tmplPath string) {
 	for idx, v := range s {
 		if strings.HasPrefix(v, ":") {
 			r.params = append(r.params, v[1:])
-			ps = append(ps, "([a-zA-Z0-9-_]+)")
+			ps = append(ps, pathParamPattern)
 		} else {
 			ps = append(ps, v)
 		}
