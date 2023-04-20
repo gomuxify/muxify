@@ -17,5 +17,9 @@ func main() {
 		fmt.Fprintln(w, "Getting /")
 	})
 
+	r.Get("/person/:name", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Working!")
+	})
+
 	http.ListenAndServe(":8080", r)
 }

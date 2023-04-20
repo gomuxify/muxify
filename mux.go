@@ -48,7 +48,7 @@ type RouteMatch struct {
 }
 
 func (r *Router) NewRoute() *Route {
-	route := &Route{}
+	route := &Route{paramPos: make(map[string]int)}
 	r.routes = append(r.routes, route)
 	return route
 }
@@ -120,7 +120,7 @@ func (r *Router) upsertPath(path, method string, f func(http.ResponseWriter, *ht
 
 func (r *Router) findRouteWithPath(path string) *Route {
 	for _, route := range r.routes {
-		if route.path == path {
+		if route.tmplPath == path {
 			return route
 		}
 	}
