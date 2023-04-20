@@ -23,5 +23,11 @@ func main() {
 		fmt.Fprintf(w, "Hello, %s\n", name)
 	})
 
+	r.Get("/organisations/:organisation/people/:people", func(w http.ResponseWriter, r *http.Request) {
+		params := muxify.Params(r)
+		fmt.Fprintf(w, "Organisation: %s\n", params["organisation"])
+		fmt.Fprintf(w, "Person: %s\n", params["people"])
+	})
+
 	http.ListenAndServe(":8080", r)
 }

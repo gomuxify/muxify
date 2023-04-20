@@ -30,9 +30,10 @@ func (r *Route) Match(req *http.Request, match *RouteMatch) bool {
 	// match route by regexp comparison
 	if r.matcher.MatchString(path) {
 
-		params := r.matcher.FindAllStringSubmatch(path, 100)
+		results := r.matcher.FindAllStringSubmatch(path, 100)
+		params := results[0][1:]
 		for idx, param := range params {
-			match.Params[r.params[idx]] = param[1]
+			match.Params[r.params[idx]] = param
 		}
 
 		return r.matchHTTPMethod(req, match)
