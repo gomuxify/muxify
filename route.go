@@ -10,7 +10,7 @@ import (
 type Route struct {
 	tmplPath string
 	mappings []*routeMapping
-	paramPos map[string]int
+	params   []string
 	matcher  *regexp.Regexp
 	routeConf
 }
@@ -29,7 +29,12 @@ func (r *Route) Match(req *http.Request, match *RouteMatch) bool {
 
 	// match route by regexp comparison
 	if r.matcher.MatchString(path) {
-		// TODO: Extract variables from path
+
+		params := r.matcher.FindAllStringSubmatch(path, 100)
+		for idx, param := range params {
+			match.Params[r.params[idx]] = param[1]
+		}
+
 		return r.matchHTTPMethod(req, match)
 	}
 
@@ -82,13 +87,11 @@ func (r *Route) registerMatcher(tmplPath string) {
 	r.tmplPath = tmplPath
 
 	s := strings.Split(r.tmplPath, "/")
-	pos := 0
 	ps := []string{"^"}
 	for idx, v := range s {
 		if strings.HasPrefix(v, ":") {
-			r.paramPos[v] = pos
-			pos++
-			ps = append(ps, "[a-zA-Z0-9-_]+")
+			r.params = append(r.params, v[1:])
+			ps = append(ps, "([a-zA-Z0-9-_]+)")
 		} else {
 			ps = append(ps, v)
 		}

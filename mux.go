@@ -36,9 +36,9 @@ func (r *Router) AllowTrailingSlash() *Router {
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	var match RouteMatch
+	match := &RouteMatch{Params: make(map[string]string)}
 	var handler http.Handler
-	if r.Match(req, &match) {
+	if r.Match(req, match) {
 		handler = match.Handler
 		req = ctxAddParams(req, match.Params)
 	}
@@ -62,7 +62,7 @@ type RouteMatch struct {
 }
 
 func (r *Router) NewRoute() *Route {
-	route := &Route{paramPos: make(map[string]int), routeConf: r.routeConf}
+	route := &Route{routeConf: r.routeConf}
 	r.routes = append(r.routes, route)
 	return route
 }
@@ -122,6 +122,11 @@ func Params(r *http.Request) map[string]string {
 		return rv.(map[string]string)
 	}
 	return nil
+}
+
+func GetParam(r *http.Request, val string) string {
+	params := Params(r)
+	return params[val]
 }
 
 func (r *Router) upsertPath(path, method string, f func(http.ResponseWriter, *http.Request)) *Route {

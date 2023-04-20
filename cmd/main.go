@@ -19,7 +19,8 @@ func main() {
 	})
 
 	r.Get("/person/:name", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Working!")
+		name := muxify.GetParam(r, "name")
+		fmt.Fprintf(w, "Hello, %s\n", name)
 	})
 
 	http.ListenAndServe(":8080", r)
