@@ -15,10 +15,24 @@ type Router struct {
 	NotFoundHandler         http.Handler
 	MethodNotAllowedHandler http.Handler
 	routes                  []*Route
+	routeConf
+}
+
+type routeConf struct {
+	trailingSlash bool
 }
 
 func NewRouter() *Router {
-	return &Router{}
+	return &Router{
+		routeConf: routeConf{
+			trailingSlash: false,
+		},
+	}
+}
+
+func (r *Router) AllowTrailingSlash() *Router {
+	r.trailingSlash = true
+	return r
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -48,7 +62,7 @@ type RouteMatch struct {
 }
 
 func (r *Router) NewRoute() *Route {
-	route := &Route{paramPos: make(map[string]int)}
+	route := &Route{paramPos: make(map[string]int), routeConf: r.routeConf}
 	r.routes = append(r.routes, route)
 	return route
 }

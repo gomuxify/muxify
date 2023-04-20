@@ -12,6 +12,7 @@ type Route struct {
 	mappings []*routeMapping
 	paramPos map[string]int
 	matcher  *regexp.Regexp
+	routeConf
 }
 type routeMapping struct {
 	method  string
@@ -96,7 +97,10 @@ func (r *Route) registerMatcher(tmplPath string) {
 			patternSlice = append(patternSlice, "/")
 		}
 	}
-	patternSlice = append(patternSlice, "/?$")
+	if r.trailingSlash {
+		patternSlice = append(patternSlice, "/?")
+	}
+	patternSlice = append(patternSlice, "$")
 
 	pattern := strings.Join(patternSlice, "")
 	r.matcher = regexp.MustCompile(pattern)

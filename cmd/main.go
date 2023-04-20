@@ -9,6 +9,7 @@ import (
 
 func main() {
 	r := muxify.NewRouter()
+	r.AllowTrailingSlash()
 	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Posting /")
 	})
