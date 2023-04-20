@@ -81,27 +81,27 @@ func (r *Route) methodExists(method string) bool {
 func (r *Route) registerMatcher(tmplPath string) {
 	r.tmplPath = tmplPath
 
-	segments := strings.Split(r.tmplPath, "/")
+	s := strings.Split(r.tmplPath, "/")
 	pos := 0
-	patternSlice := []string{"^"}
-	for idx, v := range segments {
+	ps := []string{"^"}
+	for idx, v := range s {
 		if strings.HasPrefix(v, ":") {
 			r.paramPos[v] = pos
 			pos++
-			patternSlice = append(patternSlice, "[a-zA-Z0-9-_]+")
+			ps = append(ps, "[a-zA-Z0-9-_]+")
 		} else {
-			patternSlice = append(patternSlice, v)
+			ps = append(ps, v)
 		}
 
-		if idx != len(segments)-1 {
-			patternSlice = append(patternSlice, "/")
+		if idx != len(s)-1 {
+			ps = append(ps, "/")
 		}
 	}
 	if r.trailingSlash {
-		patternSlice = append(patternSlice, "/?")
+		ps = append(ps, "/?")
 	}
-	patternSlice = append(patternSlice, "$")
+	ps = append(ps, "$")
 
-	pattern := strings.Join(patternSlice, "")
+	pattern := strings.Join(ps, "")
 	r.matcher = regexp.MustCompile(pattern)
 }
