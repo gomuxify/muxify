@@ -96,7 +96,7 @@ func (r *Route) registerMatcher(tmplPath string) {
 			patternSlice = append(patternSlice, "/")
 		}
 	}
-	patternSlice = append(patternSlice, "$")
+	patternSlice = append(patternSlice, "/?$")
 
 	pattern := strings.Join(patternSlice, "")
 	r.matcher = regexp.MustCompile(pattern)
