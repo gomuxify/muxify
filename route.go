@@ -18,6 +18,7 @@ type Route struct {
 	matcher  *regexp.Regexp
 	routeConf
 }
+
 type routeMapping struct {
 	method  string
 	handler http.Handler
